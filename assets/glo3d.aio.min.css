@@ -1,0 +1,5 @@
+/*
+Generated time: October 8, 2024 21:53
+This file was created by the app developer. Feel free to contact the original developer with any questions. It was minified (compressed) by AVADA. AVADA do NOT own this script.
+*/
+.glo3d-modal{display:none;position:fixed;z-index:1;padding-top:100px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:#000;background-color:rgba(0,0,0,.4)}.glo3d-modal-content{background-color:#fefefe;margin:auto;padding:20px;border:1px solid #888;width:40%;text-align:center}.close-glo-modal{color:#aaa;float:right;font-size:28px;font-weight:700}.close-glo-modal:focus,.close-glo-modal:hover{color:#000;text-decoration:none;cursor:pointer}.modal-btn{border:1px solid #999;border-radius:30px;padding:10px;background:#eee;color:#222}@media (max-width:800px){.glo3d-modal-content{padding:5px;width:100%}}

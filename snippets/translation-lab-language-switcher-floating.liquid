@@ -1,0 +1,635 @@
+{% if settings.tl_custom_sw_enable_language or settings.tl_custom_sw_enable_currency %}
+
+{%- liquid
+
+assign responsive = 'floating'
+assign switcher_position = settings.language_switcher_position
+assign currency_format = settings.tl_custom_sw_currency_format
+
+assign countries_filter = settings.tl_sw_countries_filter
+
+assign is_using_markets = false
+if shop.metafields.translation_lab.markets_currency_settings
+    assign markets_currency_settings = shop.metafields.translation_lab.markets_currency_settings
+    assign is_using_markets = markets_currency_settings.enabled
+endif
+
+assign localization_language = localization.language
+assign localization_country = localization.country
+
+assign localization_available_countries = localization.available_countries
+
+assign localization_available_languages = localization.available_languages
+assign use_international_domains = false
+if shop.metafields.translation_lab.published_locales
+    assign localization_available_languages = shop.metafields.translation_lab.published_locales
+    assign use_international_domains = true
+endif
+
+assign language_currencies = shop.metafields.translation_lab.language_currencies
+
+assign switcher_mode = 'language_switcher'
+if settings.tl_custom_sw_enable_language and settings.tl_custom_sw_enable_currency == false
+    assign switcher_mode = 'language_switcher'
+elsif is_using_markets == false and settings.tl_custom_sw_enable_language == false and settings.tl_custom_sw_enable_currency
+    assign switcher_mode = 'currency_switcher'
+elsif is_using_markets == false and settings.tl_custom_sw_enable_language and settings.tl_custom_sw_enable_currency
+    assign switcher_mode = 'language_and_currency_switcher'
+elsif is_using_markets == true and settings.tl_custom_sw_enable_language and settings.tl_custom_sw_enable_currency
+    assign switcher_mode = 'region_country_and_language_switcher'
+elsif is_using_markets == true and settings.tl_custom_sw_enable_language == false and settings.tl_custom_sw_enable_currency
+    assign switcher_mode = 'region_country_switcher'
+endif
+
+assign show_flags = settings.language_switcher_flags
+assign label_type = settings.language_switcher_label
+
+assign current_selections_id = 'currentSelections-' | append: responsive
+assign currency_options_id = 'currencyOptions-' | append: responsive
+assign submit_button_id = 'submitButton-' | append: responsive
+
+assign flag_images_path = 'https://shopify-script-tags.s3.eu-west-1.amazonaws.com/tlab-svg-flags/[country-code].svg'
+assign country_code_placeholder = '[country-code]'
+
+assign language_to_country_custom_mapping = settings.tl_sw_language_country_mapping | split: ','
+
+assign language_to_country_mapping = shop.metafields.translation_lab.language_country.value
+
+assign language_switcher_id = 'languageSwitcher-' | append: responsive
+assign currency_switcher_id = 'currencySwitcher-' | append: responsive
+
+assign is_modal = settings.tl_custom_sw_enable_modal
+
+assign popup_id = 'popupBody-' | append: responsive
+assign popup_class = 'tl-dropdown'
+if is_modal
+    assign popup_id = 'modalBody-' | append: responsive
+    assign popup_class = 'tl-overlay'
+endif
+
+assign replace1 = ''
+assign replace2 = ''
+
+-%}
+
+{%- capture langList -%}
+[{%- for language in localization_available_languages %}{
+"name": "{{language.name | split: "(" | first | strip}}",
+"endonym_name": "{{ language.endonym_name | split: "(" | first | strip}}",
+"iso_code": "{{ language.iso_code }}",
+"display_code": "{{ language.iso_code | replace: replace1, replace2 }}",
+"primary": {{ language.primary }},
+{%- assign language_flag_code = language_to_country_mapping[language.iso_code] | downcase -%}
+{%- for mapping in language_to_country_custom_mapping -%}
+{%- assign parts = mapping | downcase | split: ':' -%}
+{%- if parts.size == 2 and parts[0] == language.iso_code -%}
+{%- assign language_flag_code = parts[1] -%}
+{%- break -%}
+{%- endif -%}
+{%- endfor -%}
+"flag": "{{ flag_images_path | replace: country_code_placeholder, language_flag_code }}",
+"domain": {{ language.domain | json }},
+"root_url": {{ language.root_url | json }}
+}{% unless forloop.last %},{% endunless -%}{%- endfor %}]
+{%- endcapture -%}
+
+{{ 'translation-lab-language-switcher-floating.css' | asset_url | stylesheet_tag }}
+
+{%- assign localization_language_flag_code = language_to_country_mapping[localization_language.iso_code] | downcase -%}
+{%- for mapping in language_to_country_custom_mapping -%}
+{%- assign parts = mapping | downcase | split: ':' -%}
+{%- if parts.size == 2 and parts[0] == localization_language.iso_code -%}
+{%- assign localization_language_flag_code = parts[1] -%}
+{%- break -%}
+{%- endif -%}
+{%- endfor -%}
+
+{%- case switcher_mode -%}
+
+{%- when 'language_switcher' -%}
+
+<div class="tl-switcher tl-single-switcher {{ switcher_position }}" id="{{ language_switcher_id }}">
+    {% form 'localization' %}
+    <div class="tl-select">
+        {% if show_flags %}
+        <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_language_flag_code }}">
+        {% endif %}
+        {% case label_type %}
+        {% when 'language-name' %}
+        <span class="tl-label tl-name">{{ localization_language.endonym_name | split: '(' | first | strip | replace: replace1, replace2 }}</span>
+        {% when 'language-code' %}
+        <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+        {% else %}
+        <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+        {% endcase %}
+    </div>
+    <ul class="tl-options {{ switcher_position }}">
+        {%- for language in localization_available_languages -%}
+        <li class="tl-option {% if language.iso_code == localization_language.iso_code %}active{% endif %}" data-value="{{ language.iso_code }}">
+            {% if show_flags %}
+            {%- assign language_flag_code = language_to_country_mapping[language.iso_code] | downcase -%}
+            {%- for mapping in language_to_country_custom_mapping -%}
+            {%- assign parts = mapping | downcase | split: ':' -%}
+            {%- if parts.size == 2 and parts[0] == language.iso_code -%}
+            {%- assign language_flag_code = parts[1] -%}
+            {%- break -%}
+            {%- endif -%}
+            {%- endfor -%}
+            <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, language_flag_code }}">
+            {% endif %}
+            {% case label_type %}
+            {% when 'language-name' %}
+            <span class="tl-label tl-name">{{ language.endonym_name | split: '(' | first | strip }}</span>
+            {% when 'language-code' %}
+            <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% else %}
+            <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% endcase %}
+        </li>
+        {%- endfor %}
+    </ul>
+    <input type="hidden" name="language_code" value="{{ localization_language.iso_code }}">
+    {% endform %}
+</div>
+
+{%- when 'currency_switcher' -%}
+
+<div class="tl-switcher tl-single-switcher {{ switcher_position }}" id="{{ currency_switcher_id }}">
+    {% form 'localization' %}
+    <div class="tl-select tl-currency-select">
+        {% if show_flags %}
+        <img class="tl-flag" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+        {% endif %}
+        <span class="tl-label"></span>
+    </div>
+    <ul class="tl-options {{ switcher_position }}" id="{{ currency_options_id }}"></ul>
+    <input type="hidden" name="country_code" value="{{ localization_country.iso_code }}">
+    {% endform %}
+</div>
+
+{%- when 'language_and_currency_switcher' -%}
+
+<div class="tl-wrapper {{ switcher_position }}">
+    <div class="tl-selections" id="{{ current_selections_id }}">
+        <div class="tl-selection tl-language">
+            {% if show_flags %}
+            <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_language_flag_code }}">
+            {% endif %}
+            {% case label_type %}
+            {% when 'language-name' %}
+            <span class="tl-label tl-name">{{ localization_language.endonym_name | split: '(' | first | strip }}</span>
+            {% when 'language-code' %}
+            <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% else %}
+            <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% endcase %}
+        </div>
+        <div class="tl-selection tl-currency">
+            {% if show_flags %}
+            <img class="tl-flag" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+            {% endif %}
+            <span class="tl-label tl-code"></span>
+        </div>
+    </div>
+    <div class="{{ popup_class }} {{ switcher_position }}" id="{{ popup_id }}">
+        <div class="tl-inner">
+            <span class="tl-close-btn">
+                <svg style="stroke:black; stroke-width:5px; width:24px;" class="icon icon-close" viewBox="0 0 60 60">
+                    <path d="M19 17.61l27.12 27.13m0-27.12L19 44.74"></path>
+                </svg>
+            </span>
+            <div class="tl-title">Language</div>
+            <div class="tl-switcher" id="{{ language_switcher_id }}">
+                {% form 'localization' %}
+                <div class="tl-select">
+                    {% if show_flags %}
+                    <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_language_flag_code }}">
+                    {% endif %}
+                    {% case label_type %}
+                    {% when 'language-name' %}
+                    <span class="tl-label tl-name">{{ localization_language.endonym_name | split: '(' | first | strip }}</span>
+                    {% when 'language-code' %}
+                    <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                    {% else %}
+                    <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                    {% endcase %}
+                </div>
+                <ul class="tl-options {{ switcher_position }}">
+                    {%- for language in localization_available_languages -%}
+                    <li class="tl-option {% if language.iso_code == localization_language.iso_code %}active{% endif %}" data-value="{{ language.iso_code }}">
+                        {% if show_flags %}
+                        {%- assign language_flag_code = language_to_country_mapping[language.iso_code] | downcase -%}
+                        {%- for mapping in language_to_country_custom_mapping -%}
+                        {%- assign parts = mapping | downcase | split: ':' -%}
+                        {%- if parts.size == 2 and parts[0] == language.iso_code -%}
+                        {%- assign language_flag_code = parts[1] -%}
+                        {%- break -%}
+                        {%- endif -%}
+                        {%- endfor -%}
+                        <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, language_flag_code }}">
+                        {% endif %}
+                        {% case label_type %}
+                        {% when 'language-name' %}
+                        <span class="tl-label tl-name">{{ language.endonym_name | split: '(' | first | strip }}</span>
+                        {% when 'language-code' %}
+                        <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                        {% else %}
+                        <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                        {% endcase %}
+                    </li>
+                    {%- endfor %}
+                </ul>
+                <input type="hidden" name="language_code" value="{{ localization_language.iso_code }}">
+                {% endform %}
+            </div>
+            <div class="tl-title">Currency</div>
+            <div class="tl-switcher" id="{{ currency_switcher_id }}">
+                <div class="tl-select tl-currency-select">
+                    {% if show_flags %}
+                    <img class="tl-flag" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+                    {% endif %}
+                    <span class="tl-label"></span>
+                </div>
+                <ul class="tl-options {{ switcher_position }}" id="{{ currency_options_id }}"></ul>
+            </div>
+            <div class="tl-btn-container">
+                <button class="tl-submit-btn" id="{{ submit_button_id }}">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{%- when 'region_country_and_language_switcher' -%}
+
+<div class="tl-wrapper {{ switcher_position }}">
+    <div class="tl-selections" id="{{ current_selections_id }}">
+        <div class="tl-selection tl-currency">
+            {% if show_flags %}
+            <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_country.iso_code | downcase }}">
+            {% endif %}
+            <span class="tl-label tl-code">{{ localization_country.name }} ({{ localization_country.currency.iso_code }} {{ localization_country.currency.symbol }})</span>
+        </div>
+        <div class="tl-selection tl-language">
+            {% if show_flags %}
+            <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_language_flag_code }}">
+            {% endif %}
+            {% case label_type %}
+            {% when 'language-name' %}
+            <span class="tl-label tl-name">{{ localization_language.endonym_name | split: '(' | first |strip }}</span>
+            {% when 'language-code' %}
+            <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% else %}
+            <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% endcase %}
+        </div>
+    </div>
+    <div class="{{ popup_class }} {{ switcher_position }}" id="{{ popup_id }}">
+        <div class="tl-inner">
+            <span class="tl-close-btn">
+                <svg style="stroke: black; stroke-width: 4px; width: 24px;" class="icon icon-close" viewBox="0 0 64 64">
+                    <path d="M19 17.61l27.12 27.13m0-27.12L19 44.74"></path>
+                </svg>
+            </span>
+            <div class="tl-title">Country/region</div>
+            <div class="tl-switcher" id="{{ currency_switcher_id }}">
+                {% form 'localization' %}
+                <div class="tl-select tl-currency-select">
+                    {% if show_flags %}
+                    <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_country.iso_code | downcase }}">
+                    {% endif %}
+                    <span class="tl-label">{{ localization_country.name }} ({{ localization_country.currency.iso_code }} {{ localization_country.currency.symbol }})</span>
+                </div>
+                <ul class="tl-options {{ switcher_position }}" id="{{ currency_options_id }}" role="list">
+                    {% for country in localization_available_countries %}
+                    {% if countries_filter == blank or countries_filter contains country.iso_code %}
+                    <li class="tl-option" tabindex="-1" data-value="{{ country.iso_code }}">
+                        {% if show_flags %}
+                        <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, country.iso_code | downcase }}">
+                        {% endif %}
+                        <span class="tl-label">{{ country.name }} ({{ country.currency.iso_code }} {{ country.currency.symbol }})</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                <input type="hidden" name="country_code" value="{{ localization_country.iso_code }}">
+                <input type="hidden" name="language_code" value="{{ localization_language.iso_code }}">
+                {% endform %}
+            </div>
+            <div class="tl-title">Language</div>
+            <div class="tl-switcher" id="{{ language_switcher_id }}">
+                {% form 'localization' %}
+                <div class="tl-select">
+                    {% if show_flags %}
+                    <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_language_flag_code }}">
+                    {% endif %}
+                    {% case label_type %}
+                    {% when 'language-name' %}
+                    <span class="tl-label tl-name">{{ localization_language.endonym_name | split: '(' | first | strip }}</span>
+                    {% when 'language-code' %}
+                    <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                    {% else %}
+                    <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                    {% endcase %}
+                </div>
+                <ul class="tl-options {{ switcher_position }}">
+                    {%- for language in localization_available_languages -%}
+                    <li class="tl-option {% if language.iso_code == localization_language.iso_code %}active{% endif %}" data-value="{{ language.iso_code }}">
+                        {% if show_flags %}
+                        {%- assign language_flag_code = language_to_country_mapping[language.iso_code] | downcase -%}
+                        {%- for mapping in language_to_country_custom_mapping -%}
+                        {%- assign parts = mapping | downcase | split: ':' -%}
+                        {%- if parts.size == 2 and parts[0] == language.iso_code -%}
+                        {%- assign language_flag_code = parts[1] -%}
+                        {%- break -%}
+                        {%- endif -%}
+                        {%- endfor -%}
+                        <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, language_flag_code }}">
+                        {% endif %}
+                        {% case label_type %}
+                        {% when 'language-name' %}
+                        <span class="tl-label tl-name">{{ language.endonym_name | split: '(' | first | strip }}</span>
+                        {% when 'language-code' %}
+                        <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                        {% else %}
+                        <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                        {% endcase %}
+                    </li>
+                    {%- endfor %}
+                </ul>
+                <input type="hidden" name="country_code" value="{{ localization_country.iso_code }}">
+                <input type="hidden" name="language_code" value="{{ localization_language.iso_code }}">
+                {% endform %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{%- when 'region_country_switcher' -%}
+
+<div class="tl-switcher tl-single-switcher {{ switcher_position }}" id="{{ currency_switcher_id }}">
+    {% form 'localization' %}
+    <div class="tl-select tl-currency-select">
+        {% if show_flags %}
+        <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_country.iso_code | downcase }}">
+        {% endif %}
+        <span class="tl-label">{{ localization_country.name }} ({{ localization_country.currency.iso_code }} {{ localization_country.currency.symbol }})</span>
+    </div>
+    <ul class="tl-options {{ switcher_position }}" id="{{ currency_options_id }}" role="list">
+        {% for country in localization_available_countries %}
+        {% if countries_filter == blank or countries_filter contains country.iso_code %}
+        <li class="tl-option" tabindex="-1" data-value="{{ country.iso_code }}">
+            {% if show_flags %}
+            <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, country.iso_code | downcase }}">
+            {% endif %}
+            <span class="tl-label">{{ country.name }} ({{ country.currency.iso_code }} {{ country.currency.symbol }})</span>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    <input type="hidden" name="country_code" value="{{ localization_country.iso_code }}">
+    {% endform %}
+</div>
+
+{%- when 'region_currency_and_language_switcher' -%}
+
+<div class="tl-wrapper {{ switcher_position }}">
+    <div class="tl-selections" id="{{ current_selections_id }}">
+        <div class="tl-selection tl-currency">
+            {% if show_flags %}
+            {% assign flag_img = localization_country.currency.iso_code | slice: 0, 2 %}
+            <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, flag_img | downcase }}">
+            {% endif %}
+            <span class="tl-label tl-code">{{ localization_country.currency.iso_code }} {{ localization_country.currency.symbol }}</span>
+        </div>
+        <div class="tl-selection tl-language">
+            {% if show_flags %}
+            <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_language_flag_code }}">
+            {% endif %}
+            {% case label_type %}
+            {% when 'language-name' %}
+            <span class="tl-label tl-name">{{ localization_language.endonym_name | split: '(' | first | strip }}</span>
+            {% when 'language-code' %}
+            <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% else %}
+            <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+            {% endcase %}
+        </div>
+    </div>
+    <div class="{{ popup_class }} {{ switcher_position }}" id="{{ popup_id }}">
+        <div class="tl-inner">
+            <span class="tl-close-btn">
+                <svg style="stroke: black; stroke-width: 4px; width: 24px;" class="icon icon-close" viewBox="0 0 64 64"><path d="M19 17.61l27.12 27.13m0-27.12L19 44.74"></path></svg>
+            </span>
+            <div class="tl-title">Currency</div>
+            <div class="tl-switcher" id="{{ currency_switcher_id }}">
+                {% form 'localization' %}
+                <div class="tl-select tl-currency-select">
+                    {% if show_flags %}
+                    {% assign flag_img = localization_country.currency.iso_code | slice: 0, 2 %}
+                    <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, flag_img | downcase }}">
+                    {% endif %}
+                    <span class="tl-label">{{ localization_country.currency.iso_code }} {{ localization_country.currency.symbol }}</span>
+                </div>
+                <ul class="tl-options {{ switcher_position }}" id="{{ currency_options_id }}" role="list">
+                    {% assign currencies = '' %}
+                    {% for country in localization_available_countries %}
+                    {% unless currencies contains country.currency.iso_code %}
+                    {% assign currencies = currencies | append: country.currency.iso_code %}
+                    <li class="tl-option" tabindex="-1" data-value="{{ country.iso_code }}">
+                        {% if show_flags %}
+                        {% assign flag_img = country.currency.iso_code | slice: 0, 2 %}
+                        <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, flag_img | downcase }}">
+                        {% endif %}
+                        <span class="tl-label">{{ country.currency.iso_code }} {{ country.currency.symbol }}</span>
+                    </li>
+                    {% endunless %}
+                    {% endfor %}
+                </ul>
+                <input type="hidden" name="country_code" value="{{ localization_country.iso_code }}">
+                <input type="hidden" name="language_code" value="{{ localization_language.iso_code }}">
+                {% endform %}
+            </div>
+            <div class="tl-title">Language</div>
+            <div class="tl-switcher" id="{{ language_switcher_id }}">
+                {% form 'localization' %}
+                <div class="tl-select">
+                    {% if show_flags %}
+                    <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, localization_language_flag_code }}">
+                    {% endif %}
+                    {% case label_type %}
+                    {% when 'language-name' %}
+                    <span class="tl-label tl-name">{{ localization_language.endonym_name | split: '(' | first | strip }}</span>
+                    {% when 'language-code' %}
+                    <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                    {% else %}
+                    <span class="tl-label tl-code">{{ localization_language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                    {% endcase %}
+                </div>
+                <ul class="tl-options {{ switcher_position }}">
+                    {%- for language in localization_available_languages -%}
+                    <li class="tl-option {% if language.iso_code == localization_language.iso_code %}active{% endif %}" data-value="{{ language.iso_code }}">
+                        {% if show_flags %}
+                        {%- assign language_flag_code = language_to_country_mapping[language.iso_code] | downcase -%}
+                        {%- for mapping in language_to_country_custom_mapping -%}
+                        {%- assign parts = mapping | downcase | split: ':' -%}
+                        {%- if parts.size == 2 and parts[0] == language.iso_code -%}
+                        {%- assign language_flag_code = parts[1] -%}
+                        {%- break -%}
+                        {%- endif -%}
+                        {%- endfor -%}
+                        <img class="tl-flag" src="{{ flag_images_path | replace: country_code_placeholder, language_flag_code }}">
+                        {% endif %}
+                        {% case label_type %}
+                        {% when 'language-name' %}
+                        <span class="tl-label tl-name">{{ language.endonym_name | split: '(' | first | strip }}</span>
+                        {% when 'language-code' %}
+                        <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                        {% else %}
+                        <span class="tl-label tl-code">{{ language.iso_code | split: '-' | first | strip | replace: replace1, replace2 }}</span>
+                        {% endcase %}
+                    </li>
+                    {%- endfor %}
+                </ul>
+                <input type="hidden" name="country_code" value="{{ localization_country.iso_code }}">
+                <input type="hidden" name="language_code" value="{{ localization_language.iso_code }}">
+                {% endform %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{%- endcase -%}
+
+<style>
+  .tl-single-switcher,
+  .tl-selections {
+    border-width: {{ settings.language_switcher_border_width }}px !important;
+    border-style: solid;
+    border-color: {{ settings.language_switcher_border_color }} !important;
+    background-color: {{ settings.language_switcher_background_color }} !important;
+  }
+
+  .tl-single-switcher div,
+  .tl-selections > div {
+    font-size: {{ settings.language_switcher_font_size }} !important;
+    font-weight: {{ settings.language_switcher_font_weight }} !important;
+    color: {{ settings.language_switcher_text_color }} !important;
+  }
+
+  .tl-label {
+    color: {{ settings.language_switcher_text_color }} !important;
+  }
+
+  .tl-select:after {
+    border-color: {{ settings.language_switcher_text_color }} !important;
+  }
+
+  .tl-options.bottom-right,
+  .tl-options.bottom-left {
+    bottom: 100%;
+    top: auto;
+  }
+
+  .tl-switcher.top-right,
+  .tl-wrapper.top-right {
+    top: {{ settings.language_switcher_spacing_top }}px;
+    bottom: auto;
+    left: auto;
+    right: {{ settings.language_switcher_spacing_right }}px;
+  }
+
+  .tl-switcher.top-left,
+  .tl-wrapper.top-left {
+    top: {{ settings.language_switcher_spacing_top }}px;
+    bottom: auto;
+    left: {{ settings.language_switcher_spacing_left }}px;
+    right: auto;
+  }
+
+  .tl-switcher.bottom-left,
+  .tl-wrapper.bottom-left {
+    position: fixed !important;
+    top: auto !important;
+    bottom: {{ settings.language_switcher_spacing_bottom }}px !important;
+    left: {{ settings.language_switcher_spacing_left }}px !important;
+    right: auto !important;
+  }
+
+  .tl-switcher.bottom-right,
+  .tl-wrapper.bottom-right {
+    position: fixed !important;
+    top: auto !important;
+    bottom: {{ settings.language_switcher_spacing_bottom }}px !important;
+    left: auto !important;
+    right: {{ settings.language_switcher_spacing_right }}px !important;
+  }
+
+  {% if settings.language_switcher_custom_css != blank -%}
+  {{- settings.language_switcher_custom_css -}}
+  {%- endif %}
+</style>
+
+{{ "/services/javascripts/currencies.js" | script_tag }}
+{{ "translation-lab-switcher.js" | asset_url | script_tag }}
+
+<script>
+
+(function() {
+
+    if (typeof window.TranslationLab === 'undefined') {
+        window.TranslationLab = {};
+    }
+
+    if (typeof TranslationLab.Currency === 'undefined') {
+        window.TranslationLab.Currency = {};
+    }
+
+    TranslationLab.Currency.themeMoneyFormat = {{ shop.money_format | json }};
+    TranslationLab.Currency.themeMoneyWithCurrencyFormat = {{ shop.money_with_currency_format | json }};
+
+    TranslationLab.Currency.format = '{{ currency_format }}';
+
+    var enabledShopCurrenciesJson = '[{%- for currency in shop.enabled_currencies %}{"name":"{{currency.name}}","iso_code":"{{currency.iso_code}}","symbol":"{{currency.symbol}}"}{% unless forloop.last %},{% endunless -%}{%- endfor %}]';
+
+    var shopDomain = window.Shopify && window.Shopify.designMode
+        ? '{{shop.permanent_domain}}'
+        : '{{shop.domain}}';
+
+    var availableCountriesJson = '[{%- for country in localization_available_countries %}{"name":"{{country.name}}","iso_code":"{{country.iso_code}}","currency_code":"{{country.currency.iso_code}}"}{% unless forloop.last %},{% endunless -%}{%- endfor %}]';
+
+    var availableCountries = JSON.parse(availableCountriesJson);
+
+    var switcherSettings = {
+        switcherMode: '{{ switcher_mode }}',
+        isModal: {{ is_modal }},
+        showFlags: {{ show_flags | json }},
+        labelType: '{{ label_type }}',
+        useInternationalDomains: {{ use_international_domains | json }},
+        languageSwitcherId: '{{ language_switcher_id }}',
+        dropdownSelector: 'div.tl-select',
+        optionsListSelector: 'ul.tl-options',
+        currencySwitcherId: '{{ currency_switcher_id }}',
+        currencyOptionsId: '{{ currency_options_id }}',
+        currentSelectionsId: '{{ current_selections_id }}',
+        submitButtonId: '{{ submit_button_id }}',
+        popupId: '{{ popup_id }}',
+        langCurrencies: {{ language_currencies | json }},
+        shopCurrencyCode: {{ localization_country.currency.iso_code | json }} || {{ shop.currency | json }},
+        enabledShopCurrencies: JSON.parse(enabledShopCurrenciesJson),
+        currencyFormatClass: 'span.tlab-currency-format, span.price-item',
+        languageList: JSON.parse({{ langList | json }}),
+        currentLocale: '{{localization_language.iso_code}}',
+        currentCountry: '{{localization_country.iso_code}}',
+        shopDomain: shopDomain,
+        availableCountries: availableCountries
+    };
+
+    if (window.TranslationLab && window.TranslationLab.AdvancedSwitcher) {
+        window.TranslationLab.AdvancedSwitcher.configure(switcherSettings);
+    }
+
+})()
+
+</script>
+
+{% endif %}

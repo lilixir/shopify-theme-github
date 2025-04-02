@@ -1,0 +1,225 @@
+/* CONTAINERS */
+
+.tl-wrapper {
+  position: absolute;
+  z-index: 9999;
+}
+.tl-dropdown {
+  display: none;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0,0,0,.15);
+  background-color: #fff;
+  padding: 12px 15px 17px;
+}
+.tl-dropdown.active {
+  display: block;
+}
+.tl-overlay {
+  display: none;
+  position: fixed;
+  top: 0; right: 0;
+  bottom: 0; left: 0;
+  z-index: 9999;
+  background-color: rgba(0,0,0,.5);
+  align-items: center;
+  justify-content: center;
+}
+.tl-overlay.active {
+  display: flex; 
+}
+.tl-overlay .tl-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  max-width: 95%;
+  min-height: 150px;
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0,0,0,.15);
+  background-color: #fff;
+  padding: 25px 5%;
+}
+
+/* SWITCHERS */
+
+.tl-switcher {
+  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+.tl-switcher + .tl-switcher {
+  margin-top: 10px;
+}
+.tl-single-switcher {
+  position: absolute;
+  z-index: 9999;
+  box-shadow: 0 0 10px rgba(0,0,0,.15);
+}
+.tl-select {
+  display: flex;
+  align-items: center;
+  column-gap: 7px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 14px;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+.tl-select:after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 5px 0 auto;
+  border-width: 0 1px 1px 0;
+  border-style: solid;
+  border-color: #000;
+  opacity: 0.9;
+  transform: rotate(45deg) translate(0, -40%);
+  transition: 0.3s ease;
+}
+.tl-select.open:after {
+  transform: rotate(-135deg) translate(-2px, 0);
+}
+.tl-flag {
+  width: 18px;
+  height: 13.5px;
+  max-width: none;
+  border-radius: 1px;
+  vertical-align: middle;
+  transition: 0.2s ease;
+}
+.tl-label {
+  display: inline-block;
+  vertical-align: middle;
+}
+.tl-name {
+  text-transform: capitalize;
+}
+.tl-code {
+  text-transform: uppercase;
+}
+
+/* DOUBLE SWITCHER */
+
+.tl-selections {
+  display: flex;
+  align-items: center;
+  height: 45px;
+  margin-bottom: 1px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0,0,0,.15);
+}
+.tl-selections:hover {
+  cursor: pointer;
+}
+.tl-selection {
+  display: flex;
+  align-items: center;
+  column-gap: 7px;
+  padding: 0 15px;
+}
+.tl-language + .tl-currency,
+.tl-currency + .tl-language {
+  position: relative;
+}
+.tl-language + .tl-currency:before,
+.tl-currency + .tl-language:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 20px;
+  background-color: #ddd;
+}
+
+/* DROPDOWN CONTENT */
+
+.tl-close-btn {
+  display: none;
+}
+.tl-title {
+  margin: 7px 0;
+  text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+}
+.tl-options {
+  display: none;
+  list-style: none;
+  position: absolute;
+  bottom: auto;
+  top: 38px;
+  left: 0px;
+  z-index: 1;
+  min-width: 100%;
+  max-height: 160px;
+  margin: 0px 0px;
+  border-radius: 3px;
+  box-shadow: 0 0 5px 1px rgba(0,0,0,.15);
+  overflow-y: auto;
+  background-color: #fff;
+  padding: 6px 1px;
+  text-align: left;
+  font-size: 14px;
+  line-height: normal;
+  font-weight: normal;
+}
+.tl-options.open {
+  display: block;
+}
+.tl-option {
+  display: flex;
+  align-items: center;
+  column-gap: 7px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.tl-option:before,
+.tl-option:after {
+  content: none !important;
+}
+.tl-option:hover img {
+  opacity: 0.75;
+}
+.tl-btn-container {
+  margin-top: 18px;
+  text-align: center;
+}
+.tl-submit-btn {
+  border: none;
+  border-radius: 3px;
+  outline: none;
+  box-shadow: none;
+  background-color: #555;
+  padding: 9px 35px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.tl-submit-btn:hover {
+  background-color: #333;
+}
+
+/* MODAL DIALOG */
+
+.tl-overlay .tl-close-btn {
+  display: block;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+}
+.tl-overlay .tl-switcher {
+  margin-bottom: 5px;
+}
+.tl-overlay .tl-options {
+  padding: 8px 1px;
+}
