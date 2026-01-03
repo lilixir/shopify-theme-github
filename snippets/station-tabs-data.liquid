@@ -17,6 +17,7 @@
   {%- assign asn = tab[3] | split: '|' -%}
   {%- assign p_ids = asn[0] | split: ',' -%}
   {%- assign e_ids = tab[4] | split: ',' -%}
+  {% if tab[8] == '1' and request.design_mode == blank %}{% continue %}{% endif %}
   {%- unless tabs_order contains tab[0] %}{% continue %}{% endunless -%}
   {%- if e_ids contains p_id_str %}{% continue %}{% endif -%}
   {%- if tab[7] != blank%}
