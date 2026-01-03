@@ -45,7 +45,7 @@
       level: 'amery',
       proxy_path: '/apps/station-tabs',
       order: {% if tabs_order contains 'Liquid error' %}[]{% else %}{{ tabs_order }}{% endif %},
-      settings: {"dev_mode":false,"product_autosplit":true,"product_autosplit_heading":"h4","product_description_tab":false,"product_description_tab_title":"Description","force_full":true,"force_wrap":false,"full_open":true,"full_single_active":false,"clean_content":null,"deep_links":true,"clean_content_level":"","autostop_enabled":false,"autostop_heading":"h6","autostop_heading_show":true,"force_breakpoint":false,"force_breakpoint_value":768,"placement_selector":"","placement_position":"prepend","content_before_tabs":null,"remove_empty_tabs":null,"default_tab_translations":null,"content_classnames":null},
+      settings: {"dev_mode":false,"product_autosplit":true,"product_autosplit_heading":"h4","product_description_tab":true,"product_description_tab_title":"DESCRIPTION","force_full":true,"force_wrap":false,"full_open":true,"full_single_active":false,"clean_content":null,"deep_links":true,"clean_content_level":"","autostop_enabled":false,"autostop_heading":"h6","autostop_heading_show":true,"force_breakpoint":false,"force_breakpoint_value":768,"placement_selector":"","placement_position":"prepend","content_before_tabs":null,"remove_empty_tabs":null,"default_tab_translations":null,"content_classnames":null},
       template: '{{ template.name }}',
       productHandle: {% if product.handle == blank %}false{% else %}'{{ product.handle }}'{% endif %},
       events: {},
